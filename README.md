@@ -1,5 +1,11 @@
 # Real-Time ML Model Serving API
 
+![Go](https://img.shields.io/badge/Go-1.21%2B-00ADD8)
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Redis](https://img.shields.io/badge/Redis-Cache-red)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Performance](https://img.shields.io/badge/Latency-%3C1ms-brightgreen)
+
 [English](#english) | [Português](#português)
 
 ---
