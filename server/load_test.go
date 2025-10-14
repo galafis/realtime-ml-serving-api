@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -141,11 +140,21 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 	return results
 }
 
+// Helper function for string repeat
+func repeatString(s string, count int) string {
+	result := ""
+	for i := 0; i < count; i++ {
+		result += s
+	}
+	return result
+}
+
 // Print load test results
 func printLoadTestResults(t *testing.T, results LoadTestResults) {
-	t.Logf("\n" + "=".repeat(60))
+	separator := repeatString("=", 60)
+	t.Logf("\n" + separator)
 	t.Logf("Load Test Results")
-	t.Logf("=".repeat(60))
+	t.Logf(separator)
 	t.Logf("Total Requests:      %d", results.TotalRequests)
 	t.Logf("Successful:          %d", results.SuccessfulRequests)
 	t.Logf("Failed:              %d", results.FailedRequests)
@@ -161,16 +170,7 @@ func printLoadTestResults(t *testing.T, results LoadTestResults) {
 			t.Logf("  P%d:              %v", p, latency)
 		}
 	}
-	t.Logf("=".repeat(60))
-}
-
-// Helper function for string repeat
-func (s string) repeat(count int) string {
-	result := ""
-	for i := 0; i < count; i++ {
-		result += "="
-	}
-	return result
+	t.Logf(separator)
 }
 
 // Test: Light load
@@ -271,13 +271,4 @@ func BenchmarkPredictEndpoint(b *testing.B) {
 		resp := httptest.NewRecorder()
 		router.ServeHTTP(resp, req)
 	}
-}
-
-// Helper to repeat strings (since strings package doesn't have Repeat in older Go)
-func repeatString(s string, count int) string {
-	var result string
-	for i := 0; i < count; i++ {
-		result += s
-	}
-	return result
 }
