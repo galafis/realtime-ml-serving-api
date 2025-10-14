@@ -24,19 +24,19 @@ var (
 
 // PredictionRequest represents an incoming prediction request
 type PredictionRequest struct {
-	ModelName string    `json:"model_name" binding:"required"`
-	Features  []float64 `json:"features" binding:"required"`
-	ModelVersion string `json:"model_version,omitempty"`
+	ModelName    string    `json:"model_name" binding:"required"`
+	Features     []float64 `json:"features" binding:"required"`
+	ModelVersion string    `json:"model_version,omitempty"`
 }
 
 // PredictionResponse represents the prediction result
 type PredictionResponse struct {
-	Prediction  interface{} `json:"prediction"`
-	Probability float64     `json:"probability,omitempty"`
-	ModelName   string      `json:"model_name"`
-	ModelVersion string     `json:"model_version"`
-	Latency     float64     `json:"latency_ms"`
-	CacheHit    bool        `json:"cache_hit"`
+	Prediction   interface{} `json:"prediction"`
+	Probability  float64     `json:"probability,omitempty"`
+	ModelName    string      `json:"model_name"`
+	ModelVersion string      `json:"model_version"`
+	Latency      float64     `json:"latency_ms"`
+	CacheHit     bool        `json:"cache_hit"`
 }
 
 // HealthResponse represents health check response
@@ -134,7 +134,7 @@ func predict(c *gin.Context) {
 	// Check cache
 	cacheKey := fmt.Sprintf("pred:%s:%v", req.ModelName, req.Features)
 	cachedResult, err := redisClient.Get(ctx, cacheKey).Result()
-	
+
 	var response PredictionResponse
 	cacheHit := false
 
@@ -145,7 +145,7 @@ func predict(c *gin.Context) {
 	} else {
 		// Cache miss - perform prediction
 		prediction, prob := makePrediction(req.Features)
-		
+
 		response = PredictionResponse{
 			Prediction:   prediction,
 			Probability:  prob,
@@ -174,14 +174,14 @@ func makePrediction(features []float64) (interface{}, float64) {
 	for _, f := range features {
 		sum += f
 	}
-	
+
 	prediction := 0
 	if sum > 10.0 {
 		prediction = 1
 	}
-	
+
 	probability := 0.85
-	
+
 	return prediction, probability
 }
 
@@ -207,10 +207,10 @@ func listModels(c *gin.Context) {
 
 func getMetrics(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"total_requests":  1000,
-		"cache_hit_rate":  0.87,
-		"avg_latency_ms":  0.8,
-		"p99_latency_ms":  4.2,
+		"total_requests": 1000,
+		"cache_hit_rate": 0.87,
+		"avg_latency_ms": 0.8,
+		"p99_latency_ms": 4.2,
 	})
 }
 
@@ -234,11 +234,11 @@ func metricsMiddleware() gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 		duration := time.Since(start)
-		
-		log.Printf("%s %s - %d - %v", 
-			c.Request.Method, 
-			c.Request.URL.Path, 
-			c.Writer.Status(), 
+
+		log.Printf("%s %s - %d - %v",
+			c.Request.Method,
+			c.Request.URL.Path,
+			c.Writer.Status(),
 			duration)
 	}
 }
@@ -250,4 +250,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return value
 }
-

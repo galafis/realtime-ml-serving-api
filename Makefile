@@ -68,12 +68,12 @@ test-python:
 ## test-integration: Run integration tests
 test-integration:
 	@echo "Running integration tests..."
-	cd tests && go test -v -tags=integration ./...
+	cd $(SERVER_DIR) && go test -v -run TestIntegration ./...
 
 ## test-load: Run load tests
 test-load:
 	@echo "Running load tests..."
-	cd tests && go test -v -run TestHighLoadStress
+	cd $(SERVER_DIR) && go test -v -run TestHighLoadStress ./...
 
 ## lint: Run linters
 lint: lint-go lint-python

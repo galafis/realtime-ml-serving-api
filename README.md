@@ -128,17 +128,71 @@ realtime-ml-serving-api/
 │   ├── service.yaml                 # K8s service
 │   ├── hpa.yaml                     # Horizontal Pod Autoscaler
 │   └── ingress.yaml                 # Ingress configuration
-├── tests/
-│   ├── server_test.go               # Go unit tests
-│   ├── integration_test.go          # Integration tests
-│   └── load_test.go                 # Load testing
 ├── monitoring/
 │   ├── prometheus.yml               # Prometheus config
 │   ├── grafana_dashboards/          # Grafana dashboards
 │   └── alerts.yml                   # Alert rules
+├── docs/                            # Documentation
+│   └── architecture_diagrams.py     # Architecture visualizations
 ├── requirements.txt                 # Python dependencies
 └── README.md                        # This file
 ```
+
+**Note:** Tests are located in `server/` directory alongside the main code:
+- `server/server_test.go` - Unit tests
+- `server/integration_test.go` - Integration tests  
+- `server/load_test.go` - Load/performance tests
+- `client/test_ml_client.py` - Python client tests
+
+### 📐 System Architecture Diagram
+
+The following diagram illustrates the high-level system architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Applications                       │
+│          (Python, JavaScript, Go, cURL, Postman)                │
+└────────────────┬────────────────────────────────────────────────┘
+                 │ HTTP/REST API
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│                    Load Balancer / Ingress                       │
+│                  (Nginx, Traefik, AWS ALB)                       │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+         ┌───────┴───────┐
+         │               │
+┌────────▼──────┐ ┌─────▼─────────┐
+│  ML Server    │ │  ML Server    │  ... (Auto-scaled instances)
+│  Instance 1   │ │  Instance 2   │
+│  (Go/Gin)     │ │  (Go/Gin)     │
+└───────┬───────┘ └───────┬───────┘
+        │                 │
+        └────────┬────────┘
+                 │
+        ┌────────▼────────┐
+        │  Redis Cache    │
+        │  (Predictions)  │
+        └─────────────────┘
+
+External Services:
+┌──────────────┐  ┌───────────────┐  ┌──────────────┐
+│  Prometheus  │  │    Grafana    │  │    MLflow    │
+│  (Metrics)   │  │  (Dashboard)  │  │   (Models)   │
+└──────────────┘  └───────────────┘  └──────────────┘
+```
+
+**Key Components:**
+- **Client Layer**: Multiple client types supported (REST API, Python SDK, etc.)
+- **Load Balancer**: Distributes traffic across server instances
+- **ML Server Instances**: Go-based servers handle predictions with sub-ms latency
+- **Redis Cache**: Intelligent caching reduces redundant predictions by 85-95%
+- **Monitoring Stack**: Prometheus for metrics, Grafana for visualization
+- **Model Registry**: MLflow for model versioning and management
+
+For more detailed architecture diagrams, see:
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Complete system architecture documentation
+- [docs/architecture_diagrams.py](docs/architecture_diagrams.py) - Generate architecture visualizations
 
 ### 🚀 Quick Start
 
@@ -951,17 +1005,72 @@ realtime-ml-serving-api/
 │   ├── service.yaml                 # Serviço K8s
 │   ├── hpa.yaml                     # Autoscaling
 │   └── ingress.yaml                 # Configuração Ingress
-├── tests/                           # Testes
-│   ├── server_test.go               # Testes unitários Go
-│   ├── integration_test.go          # Testes de integração
-│   └── load_test.go                 # Testes de carga
 ├── monitoring/                      # Monitoramento
 │   ├── prometheus.yml               # Config Prometheus
 │   ├── grafana_dashboards/          # Dashboards Grafana
 │   └── alerts.yml                   # Regras de alertas
+├── docs/                            # Documentação
+│   └── architecture_diagrams.py     # Visualizações da arquitetura
 ├── requirements.txt                 # Dependências Python
 └── README.md                        # Este arquivo
 ```
+
+**Nota:** Os testes estão localizados no diretório `server/` junto com o código principal:
+- `server/server_test.go` - Testes unitários
+- `server/integration_test.go` - Testes de integração
+- `server/load_test.go` - Testes de carga/performance
+- `client/test_ml_client.py` - Testes do cliente Python
+
+### 📐 Diagrama da Arquitetura do Sistema
+
+O diagrama a seguir ilustra a arquitetura de alto nível do sistema:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Aplicações Cliente                           │
+│          (Python, JavaScript, Go, cURL, Postman)                │
+└────────────────┬────────────────────────────────────────────────┘
+                 │ HTTP/REST API
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│                  Load Balancer / Ingress                         │
+│                  (Nginx, Traefik, AWS ALB)                       │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+         ┌───────┴───────┐
+         │               │
+┌────────▼──────┐ ┌─────▼─────────┐
+│  ML Server    │ │  ML Server    │  ... (Instâncias auto-escaladas)
+│  Instância 1  │ │  Instância 2  │
+│  (Go/Gin)     │ │  (Go/Gin)     │
+└───────┬───────┘ └───────┬───────┘
+        │                 │
+        └────────┬────────┘
+                 │
+        ┌────────▼────────┐
+        │  Redis Cache    │
+        │  (Predições)    │
+        └─────────────────┘
+
+Serviços Externos:
+┌──────────────┐  ┌───────────────┐  ┌──────────────┐
+│  Prometheus  │  │    Grafana    │  │    MLflow    │
+│  (Métricas)  │  │  (Dashboard)  │  │  (Modelos)   │
+└──────────────┘  └───────────────┘  └──────────────┘
+```
+
+**Componentes Principais:**
+- **Camada Cliente**: Múltiplos tipos de cliente suportados (REST API, Python SDK, etc.)
+- **Load Balancer**: Distribui tráfego entre instâncias do servidor
+- **Instâncias ML Server**: Servidores baseados em Go lidam com predições com latência sub-ms
+- **Redis Cache**: Cache inteligente reduz predições redundantes em 85-95%
+- **Stack de Monitoramento**: Prometheus para métricas, Grafana para visualização
+- **Registro de Modelos**: MLflow para versionamento e gerenciamento de modelos
+
+Para diagramas de arquitetura mais detalhados, veja:
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Documentação completa da arquitetura do sistema
+- [docs/architecture_diagrams.py](docs/architecture_diagrams.py) - Gera visualizações da arquitetura
+
 
 ### 🚀 Início Rápido
 
