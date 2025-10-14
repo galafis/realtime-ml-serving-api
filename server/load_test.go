@@ -16,10 +16,10 @@ import (
 
 // Load test configuration
 type LoadTestConfig struct {
-	NumClients         int
-	RequestsPerClient  int
-	RampUpTime         time.Duration
-	TargetEndpoint     string
+	NumClients        int
+	RequestsPerClient int
+	RampUpTime        time.Duration
+	TargetEndpoint    string
 }
 
 // Load test results
@@ -40,46 +40,46 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 	var wg sync.WaitGroup
 	latencies := make([]time.Duration, 0, config.NumClients*config.RequestsPerClient)
 	var latenciesMutex sync.Mutex
-	
+
 	successCount := 0
 	failCount := 0
 	var countMutex sync.Mutex
-	
+
 	startTime := time.Now()
-	
+
 	// Spawn clients
 	for i := 0; i < config.NumClients; i++ {
 		wg.Add(1)
-		
+
 		go func(clientID int) {
 			defer wg.Done()
-			
+
 			// Ramp up delay
 			if config.RampUpTime > 0 {
 				delay := time.Duration(clientID) * (config.RampUpTime / time.Duration(config.NumClients))
 				time.Sleep(delay)
 			}
-			
+
 			// Make requests
 			for j := 0; j < config.RequestsPerClient; j++ {
 				reqBody := PredictionRequest{
 					ModelName: "iris_classifier",
 					Features:  []float64{5.1, 3.5, 1.4, 0.2},
 				}
-				
+
 				bodyBytes, _ := json.Marshal(reqBody)
 				req, _ := http.NewRequest("POST", config.TargetEndpoint, bytes.NewBuffer(bodyBytes))
 				req.Header.Set("Content-Type", "application/json")
 				resp := httptest.NewRecorder()
-				
+
 				requestStart := time.Now()
 				router.ServeHTTP(resp, req)
 				latency := time.Since(requestStart)
-				
+
 				latenciesMutex.Lock()
 				latencies = append(latencies, latency)
 				latenciesMutex.Unlock()
-				
+
 				countMutex.Lock()
 				if resp.Code == http.StatusOK {
 					successCount++
@@ -90,10 +90,10 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 			}
 		}(i)
 	}
-	
+
 	wg.Wait()
 	totalDuration := time.Since(startTime)
-	
+
 	// Calculate statistics
 	results := LoadTestResults{
 		TotalRequests:      len(latencies),
@@ -103,7 +103,7 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 		RequestsPerSecond:  float64(len(latencies)) / totalDuration.Seconds(),
 		Percentiles:        make(map[int]time.Duration),
 	}
-	
+
 	if len(latencies) > 0 {
 		// Sort latencies for percentile calculation
 		// Simple insertion sort for small arrays
@@ -116,7 +116,7 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 			}
 			latencies[j+1] = key
 		}
-		
+
 		// Calculate metrics
 		var totalLatency time.Duration
 		for _, l := range latencies {
@@ -125,7 +125,7 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 		results.AvgLatency = totalLatency / time.Duration(len(latencies))
 		results.MinLatency = latencies[0]
 		results.MaxLatency = latencies[len(latencies)-1]
-		
+
 		// Calculate percentiles
 		percentiles := []int{50, 75, 90, 95, 99}
 		for _, p := range percentiles {
@@ -136,7 +136,7 @@ func runLoadTest(t *testing.T, router *gin.Engine, config LoadTestConfig) LoadTe
 			results.Percentiles[p] = latencies[index]
 		}
 	}
-	
+
 	return results
 }
 
@@ -178,21 +178,21 @@ func TestLightLoad(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping load test in short mode")
 	}
-	
+
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/predict", predict)
-	
+
 	config := LoadTestConfig{
 		NumClients:        10,
 		RequestsPerClient: 100,
 		RampUpTime:        time.Second,
 		TargetEndpoint:    "/predict",
 	}
-	
+
 	results := runLoadTest(t, router, config)
 	printLoadTestResults(t, results)
-	
+
 	// Assertions
 	if results.FailedRequests > 0 {
 		t.Errorf("Expected 0 failed requests, got %d", results.FailedRequests)
@@ -207,21 +207,21 @@ func TestMediumLoad(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping load test in short mode")
 	}
-	
+
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/predict", predict)
-	
+
 	config := LoadTestConfig{
 		NumClients:        50,
 		RequestsPerClient: 100,
 		RampUpTime:        2 * time.Second,
 		TargetEndpoint:    "/predict",
 	}
-	
+
 	results := runLoadTest(t, router, config)
 	printLoadTestResults(t, results)
-	
+
 	// Should handle 5000 requests
 	if results.SuccessfulRequests < 4900 {
 		t.Errorf("Too many failed requests: %d", results.FailedRequests)
@@ -233,21 +233,21 @@ func TestHighLoadStress(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping load test in short mode")
 	}
-	
+
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/predict", predict)
-	
+
 	config := LoadTestConfig{
 		NumClients:        100,
 		RequestsPerClient: 100,
 		RampUpTime:        3 * time.Second,
 		TargetEndpoint:    "/predict",
 	}
-	
+
 	results := runLoadTest(t, router, config)
 	printLoadTestResults(t, results)
-	
+
 	t.Logf("Error rate: %.2f%%", float64(results.FailedRequests)/float64(results.TotalRequests)*100)
 }
 
@@ -256,15 +256,15 @@ func BenchmarkPredictEndpoint(b *testing.B) {
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/predict", predict)
-	
+
 	reqBody := PredictionRequest{
 		ModelName: "iris_classifier",
 		Features:  []float64{5.1, 3.5, 1.4, 0.2},
 	}
 	bodyBytes, _ := json.Marshal(reqBody)
-	
+
 	b.ResetTimer()
-	
+
 	for i := 0; i < b.N; i++ {
 		req, _ := http.NewRequest("POST", "/predict", bytes.NewBuffer(bodyBytes))
 		req.Header.Set("Content-Type", "application/json")
