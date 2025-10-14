@@ -1,0 +1,56 @@
+# Model Configuration
+# Author: Gabriel Demetrios Lafis
+
+models:
+  - name: "iris_classifier"
+    version: "1.0.0"
+    type: "sklearn"
+    file: "models/iris_classifier.pkl"
+    status: "active"
+    description: "Iris species classifier using Random Forest"
+    features:
+      - "sepal_length"
+      - "sepal_width"
+      - "petal_length"
+      - "petal_width"
+    cache_enabled: true
+    cache_ttl: 300
+
+  - name: "binary_classifier"
+    version: "1.0.0"
+    type: "sklearn"
+    file: "models/binary_classifier.pkl"
+    status: "active"
+    description: "Binary classification using Gradient Boosting"
+    features:
+      - "feature_0"
+      - "feature_1"
+      - "feature_2"
+      - "feature_3"
+      - "feature_4"
+      - "feature_5"
+      - "feature_6"
+      - "feature_7"
+      - "feature_8"
+      - "feature_9"
+      - "feature_10"
+      - "feature_11"
+      - "feature_12"
+      - "feature_13"
+      - "feature_14"
+      - "feature_15"
+      - "feature_16"
+      - "feature_17"
+      - "feature_18"
+      - "feature_19"
+    cache_enabled: true
+    cache_ttl: 300
+
+  - name: "fraud_detector"
+    version: "2.1.0"
+    type: "sklearn"
+    file: "models/fraud_detector.pkl"
+    status: "inactive"
+    description: "Fraud detection classifier"
+    cache_enabled: true
+    cache_ttl: 60

@@ -1,0 +1,20 @@
+{
+  "model_name": "binary_classifier",
+  "timestamp": "2025-10-14T01:07:00.541641",
+  "metrics": {
+    "accuracy": 0.91,
+    "cv_mean": 0.9010000000000001,
+    "cv_std": 0.033075670817082486,
+    "confusion_matrix": [
+      [
+        98,
+        8
+      ],
+      [
+        10,
+        84
+      ]
+    ]
+  },
+  "model_type": "GradientBoostingClassifier"
+}

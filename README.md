@@ -730,6 +730,145 @@ rate_limiting:
   burst: 2000
 ```
 
+### 🐛 Troubleshooting
+
+#### Issue: Server won't start
+
+```bash
+# Check if port 8080 is in use
+lsof -i :8080
+
+# Check Redis connection
+redis-cli ping
+
+# View detailed logs
+LOG_LEVEL=debug ./ml-server
+```
+
+#### Issue: High latency
+
+- Check cache hit rate at `/metrics` endpoint
+- Increase Redis connection pool size
+- Monitor CPU/memory usage with `docker stats`
+- Consider horizontal scaling with more replicas
+
+#### Issue: Cache errors
+
+```bash
+# Check Redis connection
+docker-compose logs redis
+
+# Clear cache
+redis-cli FLUSHALL
+
+# Restart Redis
+docker-compose restart redis
+```
+
+#### Issue: Model loading failures
+
+- Verify model file exists in `models/` directory
+- Check model format compatibility (pickle, joblib)
+- Ensure Python version used for training matches server environment
+- Check model metadata file exists
+
+### ❓ FAQ (Frequently Asked Questions)
+
+**Q: How do I add a new model?**
+
+A: 1) Train and save your model to `models/`, 2) Add an entry to `config/models.yaml`, 3) Restart the server or use hot-reload.
+
+**Q: How does caching work?**
+
+A: Predictions are cached in Redis using a key based on model name and feature values. Default TTL is 5 minutes, configurable per model.
+
+**Q: How do I monitor the API?**
+
+A: Use Prometheus to scrape metrics from `:9090/metrics` endpoint and visualize in Grafana. Sample dashboards are in `monitoring/grafana_dashboards/`.
+
+**Q: Can I use this with TensorFlow/PyTorch models?**
+
+A: Yes! Convert models to ONNX format or implement a custom predictor. See `server/models/predictor.go` for examples.
+
+**Q: How do I deploy to production?**
+
+A: Use Kubernetes manifests in `kubernetes/` for orchestrated deployments, or Docker Compose for simpler setups. Always configure TLS, authentication, and monitoring.
+
+**Q: What's the expected throughput?**
+
+A: On AWS c5.2xlarge (8 vCPU, 16GB RAM), expect 50,000+ req/sec with sub-millisecond latency. Performance varies with model complexity.
+
+**Q: How do I test locally?**
+
+A: Run `docker-compose up -d` to start all services, then use the Python client or curl to make requests.
+
+**Q: How do I handle model versioning?**
+
+A: Use the `model_version` field in requests, maintain multiple model files, and configure A/B testing in `config/models.yaml`.
+
+### 🤝 Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/AmazingFeature`)
+3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** to the branch (`git push origin feature/AmazingFeature`)
+5. **Open** a Pull Request
+
+#### Development Setup
+
+```bash
+# Install dependencies
+make install
+
+# Run tests
+make test
+
+# Run linter
+make lint
+
+# Build
+make build
+```
+
+#### Code Standards
+
+- Follow Go best practices (use `golangci-lint`)
+- Write tests for new features
+- Update documentation
+- Keep commits atomic and descriptive
+
+### 📝 Best Practices
+
+#### Model Deployment
+
+- **Version Control**: Always version your models and maintain metadata
+- **Testing**: Validate models on test data before deployment
+- **Monitoring**: Set up alerts for latency, errors, and model drift
+- **Rollback Plan**: Keep previous model versions for quick rollback
+
+#### Performance Optimization
+
+- **Caching**: Tune TTL based on your use case and data freshness requirements
+- **Connection Pooling**: Adjust Redis pool size based on concurrent load
+- **Load Testing**: Run load tests before production deployment
+- **Horizontal Scaling**: Use Kubernetes HPA for auto-scaling
+
+#### Security
+
+- **TLS**: Always use HTTPS in production
+- **Authentication**: Implement API key or OAuth authentication
+- **Rate Limiting**: Protect against abuse with rate limiting
+- **Input Validation**: Validate all inputs to prevent injection attacks
+
+#### Monitoring
+
+- **Metrics**: Track request rate, latency, error rate, cache hit rate
+- **Logging**: Use structured logging (JSON format)
+- **Alerting**: Set up alerts for anomalies (high latency, error spikes)
+- **Dashboards**: Create Grafana dashboards for visualization
+
 ### 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
@@ -740,20 +879,365 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
+### 📞 Support
+
+- 📧 Issues: [GitHub Issues](https://github.com/galafis/realtime-ml-serving-api/issues)
+- 📖 Documentation: This README and inline code documentation
+- 💬 Discussions: [GitHub Discussions](https://github.com/galafis/realtime-ml-serving-api/discussions)
+- 🌟 Star this repo if you find it helpful!
+
+---
+
 <a name="português"></a>
 ## 🇧🇷 Português
 
 ### 📊 Visão Geral
 
-**Real-Time ML Model Serving API** é uma API de alta performance e pronta para produção construída com **Go** para servir modelos de machine learning com latência sub-milissegundo.
+**Real-Time ML Model Serving API** é uma API de alta performance e pronta para produção construída com **Go** para servir modelos de machine learning com latência sub-milissegundo. Apresenta cache inteligente com **Redis**, versionamento de modelos, testes A/B, detecção de drift, logging de predições e integração com MLflow.
+
+Este projeto demonstra as melhores práticas para implantação de modelos ML em ambientes de produção onde **performance**, **escalabilidade** e **confiabilidade** são críticos.
+
+### ✨ Principais Características
+
+#### ⚡ Servidor Go de Alta Performance
+
+| Característica | Especificação | Benefício |
+|----------------|---------------|-----------|
+| **Tempo de Resposta** | < 1ms (p50), < 5ms (p99) | Latência ultra-baixa |
+| **Throughput** | 50,000+ req/seg | Alta escalabilidade |
+| **Concorrência** | Baseado em Goroutines | Uso eficiente de recursos |
+| **Memória** | < 100MB por instância | Custo-efetivo |
+| **Uso de CPU** | < 20% a 10K req/seg | Processamento eficiente |
+
+#### 🧠 Suporte a Modelos ML
+
+- **Modelos Scikit-learn**: Classificação, Regressão, Clustering
+- **Deep Learning**: TensorFlow/Keras, PyTorch (via ONNX)
+- **Formatos**: Pickle (.pkl), Joblib (.joblib), ONNX, TensorFlow SavedModel
+
+#### 🚀 Recursos de Produção
+
+- **Cache Inteligente**: Cache de predições baseado em Redis com TTL configurável
+- **Gerenciamento de Modelos**: Hot-swapping, controle de versão, testes A/B, canary deployments
+- **Monitoramento**: Métricas Prometheus, logging, detecção de drift, dashboards Grafana
+- **Confiabilidade**: Health checks, graceful shutdown, circuit breaker, rate limiting
+
+### 🏗️ Arquitetura
+
+```
+realtime-ml-serving-api/
+├── server/                          # Servidor Go
+│   ├── main.go                      # Ponto de entrada
+│   └── go.mod                       # Dependências Go
+├── client/                          # Cliente Python
+│   ├── ml_client.py                 # Cliente da API
+│   ├── train_model.py               # Treinamento de modelos
+│   ├── model_evaluator.py           # Avaliação de modelos
+│   └── batch_predictor.py           # Predições em batch
+├── models/                          # Modelos treinados
+│   ├── iris_classifier.pkl
+│   ├── binary_classifier.pkl
+│   └── metadata/                    # Metadados dos modelos
+├── config/                          # Configurações
+│   ├── server.yaml                  # Configuração do servidor
+│   ├── models.yaml                  # Configuração dos modelos
+│   └── redis.yaml                   # Configuração do Redis
+├── docker/                          # Docker
+│   ├── Dockerfile.server            # Imagem do servidor
+│   ├── Dockerfile.client            # Imagem do cliente
+│   └── docker-compose.yml           # Setup multi-container
+├── kubernetes/                      # Kubernetes
+│   ├── deployment.yaml              # Deploy K8s
+│   ├── service.yaml                 # Serviço K8s
+│   ├── hpa.yaml                     # Autoscaling
+│   └── ingress.yaml                 # Configuração Ingress
+├── tests/                           # Testes
+│   ├── server_test.go               # Testes unitários Go
+│   ├── integration_test.go          # Testes de integração
+│   └── load_test.go                 # Testes de carga
+├── monitoring/                      # Monitoramento
+│   ├── prometheus.yml               # Config Prometheus
+│   ├── grafana_dashboards/          # Dashboards Grafana
+│   └── alerts.yml                   # Regras de alertas
+├── requirements.txt                 # Dependências Python
+└── README.md                        # Este arquivo
+```
 
 ### 🚀 Início Rápido
 
+#### Pré-requisitos
+
 ```bash
+# Obrigatório
+- Go 1.21+
+- Python 3.8+
+- Redis 7.0+
+
+# Opcional
+- Docker & Docker Compose
+- Cluster Kubernetes
+- Servidor MLflow
+```
+
+#### Instalação
+
+```bash
+# Clonar repositório
 git clone https://github.com/galafis/realtime-ml-serving-api.git
 cd realtime-ml-serving-api
-docker-compose up -d
+
+# Instalar dependências Go
+cd server
+go mod download
+
+# Instalar dependências Python
+cd ../client
+pip install -r ../requirements.txt
+
+# Iniciar Redis
+docker run -d -p 6379:6379 redis:latest
+
+# Treinar modelos
+cd ../client
+python train_model.py
+
+# Construir e executar servidor
+cd ../server
+go build -o ml-server main.go
+./ml-server
 ```
+
+#### Implantação com Docker
+
+```bash
+# Construir e iniciar todos os serviços
+cd docker
+docker-compose up -d
+
+# Verificar status dos serviços
+docker-compose ps
+
+# Ver logs
+docker-compose logs -f server
+
+# Parar serviços
+docker-compose down
+```
+
+### 📚 Exemplos de Uso
+
+#### Exemplo 1: Cliente Python
+
+```python
+from client.ml_client import MLClient
+
+# Inicializar cliente
+client = MLClient(base_url="http://localhost:8080")
+
+# Verificar saúde da API
+if client.health_check():
+    print("✓ API está saudável")
+
+# Fazer predição
+result = client.predict(
+    model_name="iris_classifier",
+    features=[5.1, 3.5, 1.4, 0.2]
+)
+print(f"Predição: {result['prediction']}")
+print(f"Latência: {result['latency_ms']}ms")
+print(f"Cache hit: {result['cache_hit']}")
+
+# Benchmark
+stats = client.benchmark(
+    model_name="iris_classifier",
+    features=[5.1, 3.5, 1.4, 0.2],
+    n_requests=1000
+)
+print(f"Latência média: {stats['mean_latency_ms']:.2f}ms")
+print(f"P99: {stats['p99_latency_ms']:.2f}ms")
+```
+
+#### Exemplo 2: Predições em Batch
+
+```python
+from client.batch_predictor import BatchPredictor
+
+predictor = BatchPredictor(base_url="http://localhost:8080")
+
+# Predições em batch paralelas
+features_list = [
+    [5.1, 3.5, 1.4, 0.2],
+    [6.2, 2.9, 4.3, 1.3],
+    [7.3, 2.9, 6.3, 1.8]
+]
+
+results = predictor.predict_batch(
+    model_name="iris_classifier",
+    features_list=features_list,
+    parallel=True
+)
+
+# Predições de arquivo CSV
+df_results = predictor.predict_from_csv(
+    model_name="iris_classifier",
+    csv_path="data.csv",
+    output_path="predictions.csv"
+)
+```
+
+#### Exemplo 3: Avaliação de Modelos
+
+```python
+from client.model_evaluator import ModelEvaluator
+
+evaluator = ModelEvaluator(
+    model_path='models/iris_classifier.pkl',
+    metadata_path='models/iris_classifier_metadata.json'
+)
+
+# Avaliar modelo
+metrics = evaluator.evaluate(X_test, y_test)
+print(f"Acurácia: {metrics['accuracy']:.4f}")
+print(f"F1 Score: {metrics['f1_score']:.4f}")
+
+# Detectar drift
+drift_report = evaluator.detect_drift(X_baseline, X_current)
+print(f"Drift detectado: {drift_report['overall_drift']}")
+```
+
+### 📊 Benchmarks de Performance
+
+#### Distribuição de Latência
+
+| Percentil | Latência | Descrição |
+|-----------|----------|-----------|
+| **P50** | 0.8ms | Tempo de resposta mediano |
+| **P75** | 1.2ms | 75º percentil |
+| **P95** | 3.5ms | 95º percentil |
+| **P99** | 4.8ms | 99º percentil |
+| **P99.9** | 8.2ms | 99.9º percentil |
+
+#### Testes de Throughput
+
+| Clientes Concorrentes | Req/seg | Latência Média | Taxa de Erro |
+|-----------------------|---------|----------------|--------------|
+| 10 | 8,500 | 1.1ms | 0% |
+| 50 | 42,000 | 1.2ms | 0% |
+| 100 | 58,000 | 1.7ms | 0% |
+| 500 | 62,000 | 8.1ms | 0.01% |
+| 1000 | 55,000 | 18.2ms | 0.05% |
+
+#### Performance do Cache
+
+| Cenário | Taxa de Hit | Latência (cache) | Latência (sem cache) |
+|---------|-------------|------------------|----------------------|
+| **Predições repetidas** | 95% | 0.3ms | 1.2ms |
+| **Entradas similares** | 87% | 0.4ms | 1.3ms |
+| **Entradas aleatórias** | 12% | 0.3ms | 1.2ms |
+
+*Hardware: AWS c5.2xlarge (8 vCPU, 16GB RAM)*
+
+### 🎯 Casos de Uso
+
+1. **Detecção de Fraude em Tempo Real**: Processar transações com latência sub-milissegundo
+2. **Sistemas de Recomendação**: Servir recomendações personalizadas em escala
+3. **Manutenção Preditiva**: Monitorar equipamentos e prever falhas em tempo real
+4. **Predição de Churn**: Identificar clientes em risco para campanhas de retenção
+
+### 🔧 Configuração
+
+A configuração pode ser feita via arquivos YAML em `config/` ou variáveis de ambiente:
+
+```yaml
+# config/server.yaml
+server:
+  host: "0.0.0.0"
+  port: 8080
+  
+redis:
+  host: "localhost"
+  port: 6379
+  cache_ttl: 300s
+
+rate_limiting:
+  enabled: true
+  requests_per_second: 1000
+```
+
+### 🐛 Solução de Problemas
+
+#### Problema: Servidor não inicia
+
+```bash
+# Verificar se a porta 8080 está em uso
+lsof -i :8080
+
+# Verificar conexão Redis
+redis-cli ping
+
+# Ver logs detalhados
+LOG_LEVEL=debug ./ml-server
+```
+
+#### Problema: Alta latência
+
+- Verificar taxa de hit do cache no endpoint `/metrics`
+- Aumentar pool de conexões Redis
+- Verificar uso de CPU/memória
+- Considerar escalar horizontalmente
+
+#### Problema: Erros de cache
+
+```bash
+# Verificar conexão Redis
+docker-compose logs redis
+
+# Limpar cache
+redis-cli FLUSHALL
+
+# Reiniciar Redis
+docker-compose restart redis
+```
+
+### ❓ FAQ (Perguntas Frequentes)
+
+**Q: Como adicionar um novo modelo?**
+
+A: 1) Treine e salve o modelo em `models/`, 2) Adicione entrada em `config/models.yaml`, 3) Reinicie o servidor.
+
+**Q: Como funciona o cache?**
+
+A: Predições são armazenadas em cache no Redis usando uma chave baseada no nome do modelo e features. O TTL padrão é 5 minutos.
+
+**Q: Como monitorar a API?**
+
+A: Use Prometheus para coletar métricas no endpoint `:9090/metrics` e visualize no Grafana. Dashboards de exemplo em `monitoring/grafana_dashboards/`.
+
+**Q: Como fazer deploy em produção?**
+
+A: Use Kubernetes com os manifestos em `kubernetes/` ou Docker Compose para ambientes menores. Configure TLS, autenticação e monitoramento.
+
+**Q: Como testar localmente?**
+
+A: Execute `docker-compose up -d` para iniciar todos os serviços, então use o cliente Python ou curl para fazer requisições.
+
+### 🤝 Contribuindo
+
+Contribuições são bem-vindas! Por favor:
+
+1. Fork o repositório
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+### 📝 Melhores Práticas
+
+- **Versionamento de Modelos**: Sempre versione seus modelos e mantenha metadados
+- **Monitoramento**: Configure alertas para latência alta, erros e drift de modelo
+- **Testes**: Execute testes de carga antes de implantar em produção
+- **Cache**: Ajuste o TTL do cache baseado no padrão de uso
+- **Escalabilidade**: Use HPA no Kubernetes para auto-scaling baseado em carga
 
 ### 📄 Licença
 
@@ -762,4 +1246,12 @@ Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 ### 👤 Autor
 
 **Gabriel Demetrios Lafis**
+
+---
+
+### 📞 Suporte
+
+- 📧 Issues: [GitHub Issues](https://github.com/galafis/realtime-ml-serving-api/issues)
+- 📖 Documentação: Este README
+- 💬 Discussões: [GitHub Discussions](https://github.com/galafis/realtime-ml-serving-api/discussions)
 

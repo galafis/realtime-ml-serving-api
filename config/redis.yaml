@@ -1,0 +1,41 @@
+# Redis Configuration
+# Author: Gabriel Demetrios Lafis
+
+redis:
+  # Connection settings
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  
+  # Pool settings
+  pool_size: 100
+  min_idle_conns: 10
+  max_retries: 3
+  retry_backoff: 8ms
+  
+  # Timeout settings
+  dial_timeout: 5s
+  read_timeout: 3s
+  write_timeout: 3s
+  pool_timeout: 4s
+  idle_timeout: 300s
+  
+  # Cache settings
+  default_ttl: 300s  # 5 minutes
+  key_prefix: "ml_serving"
+  
+  # Sentinel configuration (if using Redis Sentinel)
+  sentinel:
+    enabled: false
+    master_name: ""
+    nodes:
+      - "localhost:26379"
+  
+  # Cluster configuration (if using Redis Cluster)
+  cluster:
+    enabled: false
+    nodes:
+      - "localhost:6379"
+      - "localhost:6380"
+      - "localhost:6381"
