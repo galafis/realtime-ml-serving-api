@@ -17,3 +17,5 @@ server/ml-server
 *~
 .env
 .env.local
+coverage.out
+coverage.html
