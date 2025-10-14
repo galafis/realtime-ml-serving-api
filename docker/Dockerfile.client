@@ -1,0 +1,30 @@
+# Dockerfile for Python Client
+# Author: Gabriel Demetrios Lafis
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy client code
+COPY client/ ./client/
+
+# Copy models directory for training
+COPY models/ ./models/
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Default command
+CMD ["python", "-m", "client.ml_client"]

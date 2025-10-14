@@ -1,0 +1,50 @@
+# ConfigMap for ML Server
+# Author: Gabriel Demetrios Lafis
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-server-config
+data:
+  server.yaml: |
+    server:
+      host: "0.0.0.0"
+      port: 8080
+      read_timeout: 10s
+      write_timeout: 10s
+      idle_timeout: 60s
+      max_connections: 10000
+      mode: "release"
+
+    redis:
+      host: "redis-service"
+      port: 6379
+      db: 0
+      password: ""
+      pool_size: 100
+      max_retries: 3
+      cache_ttl: 300s
+
+    models:
+      directory: "./models"
+      reload_interval: 60s
+      max_models: 10
+
+    monitoring:
+      prometheus_enabled: true
+      metrics_port: 9090
+      log_level: "info"
+      log_format: "json"
+      
+    rate_limiting:
+      enabled: true
+      requests_per_second: 1000
+      burst: 2000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+type: Opaque
+stringData:
+  password: ""  # Set your Redis password here
